@@ -1,0 +1,18 @@
+# Ticketing Checkout Test Model (PICT)
+
+TicketType: Adult, Student, Senior, EarlyBird
+SeatArea: VIP, Rock, Stand
+Payment: CreditCard, LinePay, ATM
+Promotion: None, DiscountCoupon, ReferralCode
+Delivery: E_Ticket, CVS_Pickup, PhysicalMail
+
+
+# Constraints (Business Rules)
+# Student ticket: must use convenience store pickup for on-site student ID check
+IF [TicketType] = "Student" THEN [Delivery] = "CVS_Pickup";
+
+# Early bird: cannot combine with any promotion
+IF [TicketType] = "EarlyBird" THEN [Promotion] = "None";
+
+# ATM transfer: physical mail not supported
+IF [Payment] = "ATM" THEN [Delivery] <> "PhysicalMail";

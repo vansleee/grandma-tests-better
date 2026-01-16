@@ -1,0 +1,11 @@
+user_id,username,email,age,password,remark
+1,Alex,alex@example.com,25,Passw0rd!,正常資料
+2,王小明,ming.wang@example.com,30,Test1234,正常資料（中文姓名）
+3,John_Doe!,john!doe@example.com,28,Abc@1234,含特殊符號的名字
+4,Alice,alice_with_very_long_email_address_exceeding_normal_length_limits_1234567890@exampletoolongdomain.com,22,LongMail1!,超長 Email
+5,Bob,bob@example.com,18,EdgeCase18,年齡下限邊界值
+6,Carol,carol@example.com,65,EdgeCase65,年齡上限邊界值
+7,TestUser,test.user@example.com,0,InvalidAge0,年齡低於合法範圍
+8,OldUser,old.user@example.com,120,InvalidAge120,年齡高於合理範圍
+9,Hacker,hacker@example.com,35,"' OR '1'='1",SQL Injection（密碼欄位）
+10,InjectUser,"test@example.com; DROP TABLE users;",40,SafePass123,SQL Injection（Email 欄位）

@@ -1,0 +1,12 @@
+# Shopping Cart Checkout Test Model (with Constraints)
+
+Member: Normal, VIP, Company
+Payment: Card, ATM, StorePay, COD
+Shipping: Delivery, StorePickup, SelfPickup
+Coupon: None, Discount, FreeShip, FullDiscount
+Invoice: Two, Three, EInvoice
+
+
+# Constraints
+IF [Shipping] = "SelfPickup" THEN [Payment] <> "COD";
+IF [Member] = "Company" THEN [Invoice] = "Three";

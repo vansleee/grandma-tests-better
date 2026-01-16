@@ -1,0 +1,5 @@
+Member: Normal, VIP, Company
+Payment: Card, ATM, StorePay, COD
+Shipping: Delivery, StorePickup, SelfPickup
+Coupon: None, Discount, FreeShip, FullDiscount
+Invoice: Two, Three, EInvoice
