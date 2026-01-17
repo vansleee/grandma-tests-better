@@ -1,0 +1,1721 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>阿嬤的菜市場 | Bug 獵場挑戰</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Courier+Prime:wght@700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --grandma-red: #D94848;
+            --grandma-orange: #F2994A;
+            --grandma-yellow: #F2C94C;
+            --grandma-green: #219653;
+            --grandma-cream: #FFF8E7;
+            --grandma-brown: #5D4037;
+            --market-tile: #E8D5B7;
+            --success-green: #27AE60;
+            --warning-orange: #E67E22;
+            --bug-found: #9B59B6;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background: var(--grandma-cream);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ===== 遊戲開始畫面 ===== */
+        .game-intro {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(135deg, var(--grandma-red) 0%, var(--grandma-orange) 100%);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            transition: opacity 0.5s, transform 0.5s;
+        }
+
+        .game-intro.hidden {
+            opacity: 0;
+            pointer-events: none;
+            transform: scale(1.1);
+        }
+
+        .intro-grandma {
+            font-size: 8rem;
+            animation: bounce 1s ease-in-out infinite;
+            filter: drop-shadow(0 10px 20px rgba(0,0,0,0.3));
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .intro-title {
+            font-size: 3.5rem;
+            font-weight: 900;
+            color: white;
+            text-shadow: 4px 4px 0 var(--grandma-brown), 
+                         8px 8px 0 rgba(0,0,0,0.2);
+            margin: 1rem 0;
+            text-align: center;
+        }
+
+        .intro-subtitle {
+            font-size: 1.5rem;
+            color: var(--grandma-yellow);
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .intro-rules {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            max-width: 500px;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            border: 4px dashed var(--grandma-orange);
+        }
+
+        .intro-rules h3 {
+            color: var(--grandma-red);
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .intro-rules ul {
+            list-style: none;
+            font-size: 1.1rem;
+            color: var(--grandma-brown);
+        }
+
+        .intro-rules li {
+            padding: 0.5rem 0;
+            padding-left: 2rem;
+            position: relative;
+        }
+
+        .intro-rules li::before {
+            content: '🐛';
+            position: absolute;
+            left: 0;
+        }
+
+        .start-btn {
+            background: var(--grandma-yellow);
+            color: var(--grandma-brown);
+            border: none;
+            padding: 1.2rem 3rem;
+            font-size: 1.5rem;
+            font-weight: 900;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 6px 0 #C9A227, 0 10px 20px rgba(0,0,0,0.2);
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .start-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 9px 0 #C9A227, 0 15px 30px rgba(0,0,0,0.3);
+        }
+
+        .start-btn:active {
+            transform: translateY(3px);
+            box-shadow: 0 3px 0 #C9A227;
+        }
+
+        /* ===== 遊戲 HUD ===== */
+        .game-hud {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(135deg, var(--grandma-red), var(--grandma-orange));
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+
+        .hud-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .hud-grandma {
+            font-size: 2.5rem;
+        }
+
+        .hud-title {
+            color: white;
+            font-weight: 700;
+        }
+
+        .hud-title span {
+            font-size: 0.8rem;
+            display: block;
+            opacity: 0.8;
+        }
+
+        .hud-stats {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .stat-box {
+            background: rgba(255,255,255,0.2);
+            padding: 0.5rem 1.5rem;
+            border-radius: 10px;
+            text-align: center;
+            color: white;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            opacity: 0.8;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 900;
+            font-family: 'Courier Prime', monospace;
+        }
+
+        .timer-critical {
+            animation: pulse-red 0.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse-red {
+            0%, 100% { background: rgba(255,0,0,0.5); }
+            50% { background: rgba(255,0,0,0.8); }
+        }
+
+        /* ===== 網站主體 ===== */
+        .shop-container {
+            margin-top: 80px;
+            padding: 2rem;
+            max-width: 1200px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .shop-header {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 3px solid var(--market-tile);
+        }
+
+        .shop-logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .shop-logo-icon {
+            font-size: 3rem;
+        }
+
+        .shop-logo-text h1 {
+            color: var(--grandma-green);
+            font-size: 2rem;
+        }
+
+        .shop-logo-text p {
+            color: #888;
+            font-size: 0.9rem;
+        }
+
+        .shop-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .cart-btn {
+            background: var(--grandma-green);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-family: inherit;
+            font-weight: 700;
+            transition: all 0.3s;
+        }
+
+        .cart-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(33, 150, 83, 0.4);
+        }
+
+        .cart-count {
+            background: var(--grandma-red);
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+        }
+
+        .login-btn {
+            background: transparent;
+            border: 2px solid var(--grandma-orange);
+            color: var(--grandma-orange);
+            padding: 0.8rem 1.5rem;
+            border-radius: 50px;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .login-btn:hover {
+            background: var(--grandma-orange);
+            color: white;
+        }
+
+        /* ===== 商品區域 ===== */
+        .promo-banner {
+            background: linear-gradient(135deg, var(--grandma-yellow), var(--grandma-orange));
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        .promo-text h2 {
+            color: white;
+            font-size: 2rem;
+            text-shadow: 2px 2px 0 rgba(0,0,0,0.1);
+        }
+
+        .promo-text p {
+            color: rgba(255,255,255,0.9);
+            margin-top: 0.5rem;
+        }
+
+        .promo-coupon {
+            background: white;
+            padding: 1rem 2rem;
+            border-radius: 10px;
+            text-align: center;
+            border: 3px dashed var(--grandma-red);
+        }
+
+        .promo-coupon span {
+            display: block;
+            font-size: 0.8rem;
+            color: #888;
+        }
+
+        .promo-coupon strong {
+            font-size: 1.5rem;
+            color: var(--grandma-red);
+            font-family: 'Courier Prime', monospace;
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 2rem;
+        }
+
+        .product-card {
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+            border: 3px solid transparent;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            border-color: var(--grandma-green);
+        }
+
+        .product-image {
+            height: 180px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 6rem;
+            background: linear-gradient(135deg, #f8f8f8, #fff);
+        }
+
+        .product-info {
+            padding: 1.5rem;
+        }
+
+        .product-name {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--grandma-brown);
+            margin-bottom: 0.5rem;
+        }
+
+        .product-origin {
+            font-size: 0.85rem;
+            color: #888;
+            margin-bottom: 1rem;
+        }
+
+        .product-price {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .price-current {
+            font-size: 1.8rem;
+            font-weight: 900;
+            color: var(--grandma-red);
+        }
+
+        .price-unit {
+            font-size: 0.9rem;
+            color: #888;
+        }
+
+        .price-original {
+            font-size: 1rem;
+            color: #aaa;
+            text-decoration: line-through;
+        }
+
+        .product-qty {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .qty-btn {
+            width: 36px;
+            height: 36px;
+            border: 2px solid var(--grandma-green);
+            background: white;
+            color: var(--grandma-green);
+            border-radius: 50%;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .qty-btn:hover {
+            background: var(--grandma-green);
+            color: white;
+        }
+
+        .qty-input {
+            width: 60px;
+            text-align: center;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            padding: 0.5rem;
+            font-size: 1rem;
+            font-family: inherit;
+        }
+
+        .add-cart-btn {
+            width: 100%;
+            background: var(--grandma-green);
+            color: white;
+            border: none;
+            padding: 1rem;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.3s;
+        }
+
+        .add-cart-btn:hover {
+            background: #1a7a42;
+        }
+
+        /* ===== 購物車面板 ===== */
+        .cart-panel {
+            position: fixed;
+            top: 0;
+            right: -450px;
+            width: 450px;
+            height: 100vh;
+            background: white;
+            box-shadow: -5px 0 30px rgba(0,0,0,0.2);
+            z-index: 200;
+            transition: right 0.4s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .cart-panel.open {
+            right: 0;
+        }
+
+        .cart-header {
+            background: var(--grandma-green);
+            color: white;
+            padding: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .cart-header h2 {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .close-cart {
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .cart-items {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+
+        .cart-item {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem;
+            border-bottom: 1px solid #eee;
+            align-items: center;
+        }
+
+        .cart-item-emoji {
+            font-size: 2.5rem;
+        }
+
+        .cart-item-info {
+            flex: 1;
+        }
+
+        .cart-item-name {
+            font-weight: 700;
+            color: var(--grandma-brown);
+        }
+
+        .cart-item-price {
+            color: var(--grandma-red);
+            font-weight: 600;
+        }
+
+        .cart-item-qty {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .cart-item-remove {
+            background: transparent;
+            border: none;
+            color: #ccc;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+
+        .cart-item-remove:hover {
+            color: var(--grandma-red);
+        }
+
+        .cart-empty {
+            text-align: center;
+            padding: 3rem;
+            color: #888;
+        }
+
+        .cart-empty span {
+            font-size: 4rem;
+            display: block;
+            margin-bottom: 1rem;
+        }
+
+        .cart-footer {
+            padding: 1.5rem;
+            border-top: 2px solid #eee;
+        }
+
+        .coupon-input {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .coupon-input input {
+            flex: 1;
+            padding: 0.8rem;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-family: inherit;
+        }
+
+        .coupon-input button {
+            background: var(--grandma-orange);
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-family: inherit;
+        }
+
+        .cart-totals {
+            margin-bottom: 1rem;
+        }
+
+        .cart-total-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+        }
+
+        .cart-total-row.discount {
+            color: var(--grandma-green);
+        }
+
+        .cart-total-row.final {
+            font-size: 1.3rem;
+            font-weight: 900;
+            border-top: 2px solid var(--grandma-brown);
+            padding-top: 1rem;
+            margin-top: 0.5rem;
+        }
+
+        .checkout-btn {
+            width: 100%;
+            background: var(--grandma-red);
+            color: white;
+            border: none;
+            padding: 1.2rem;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.3s;
+        }
+
+        .checkout-btn:hover {
+            background: #c13838;
+        }
+
+        /* ===== 登入彈窗 ===== */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 300;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .modal-overlay.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            width: 90%;
+            max-width: 400px;
+            transform: scale(0.9);
+            transition: transform 0.3s;
+        }
+
+        .modal-overlay.show .modal {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-header h2 {
+            color: var(--grandma-brown);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .modal-close {
+            background: transparent;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #888;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--grandma-brown);
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--grandma-green);
+        }
+
+        .login-submit {
+            width: 100%;
+            background: var(--grandma-green);
+            color: white;
+            border: none;
+            padding: 1rem;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: inherit;
+            margin-top: 1rem;
+        }
+
+        .login-hint {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: #f0f0f0;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        /* ===== Bug 發現提示 ===== */
+        .bug-toast {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(150%);
+            background: linear-gradient(135deg, var(--bug-found), #8E44AD);
+            color: white;
+            padding: 1.5rem 2rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(155, 89, 182, 0.4);
+            z-index: 400;
+            max-width: 500px;
+            width: 90%;
+            transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        .bug-toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .bug-toast-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .bug-toast-icon {
+            font-size: 2rem;
+            animation: wiggle 0.5s ease-in-out infinite;
+        }
+
+        @keyframes wiggle {
+            0%, 100% { transform: rotate(-10deg); }
+            50% { transform: rotate(10deg); }
+        }
+
+        .bug-toast-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+
+        .bug-toast-chapter {
+            background: rgba(255,255,255,0.2);
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+        }
+
+        .bug-toast-message {
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+
+        .bug-toast-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+            opacity: 0.7;
+        }
+
+        .bug-toast-close:hover {
+            opacity: 1;
+        }
+
+        /* ===== 結算畫面 ===== */
+        .checkout-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .checkout-overlay.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .checkout-result {
+            background: white;
+            border-radius: 30px;
+            padding: 3rem;
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .checkout-icon {
+            font-size: 6rem;
+            margin-bottom: 1rem;
+        }
+
+        .checkout-title {
+            font-size: 2rem;
+            color: var(--grandma-brown);
+            margin-bottom: 1rem;
+        }
+
+        .checkout-amount {
+            font-size: 3rem;
+            font-weight: 900;
+            color: var(--grandma-red);
+            margin-bottom: 1rem;
+        }
+
+        .checkout-amount.negative {
+            color: var(--grandma-green);
+        }
+
+        .checkout-message {
+            color: #666;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+
+        .checkout-close {
+            background: var(--grandma-green);
+            color: white;
+            border: none;
+            padding: 1rem 3rem;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        /* ===== 遊戲結束畫面 ===== */
+        .game-over {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(135deg, var(--grandma-red), var(--bug-found));
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s;
+        }
+
+        .game-over.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .game-over-icon {
+            font-size: 8rem;
+            margin-bottom: 1rem;
+        }
+
+        .game-over-title {
+            font-size: 3rem;
+            color: white;
+            text-shadow: 4px 4px 0 rgba(0,0,0,0.2);
+            margin-bottom: 1rem;
+        }
+
+        .game-over-stats {
+            background: rgba(255,255,255,0.2);
+            padding: 2rem 3rem;
+            border-radius: 20px;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .game-over-bugs {
+            font-size: 4rem;
+            font-weight: 900;
+            color: var(--grandma-yellow);
+            text-shadow: 3px 3px 0 rgba(0,0,0,0.2);
+        }
+
+        .game-over-label {
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .game-over-rank {
+            color: var(--grandma-yellow);
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-top: 1rem;
+        }
+
+        .bug-list {
+            background: white;
+            border-radius: 20px;
+            padding: 1.5rem;
+            max-width: 500px;
+            width: 90%;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-bottom: 2rem;
+        }
+
+        .bug-list h3 {
+            color: var(--grandma-brown);
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+
+        .bug-list-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 0;
+            font-size: 0.95rem;
+            color: #555;
+            border-bottom: 1px solid #eee;
+        }
+
+        .bug-list-item:last-child {
+            border-bottom: none;
+        }
+
+        .bug-list-item.found {
+            color: var(--grandma-green);
+        }
+
+        .bug-list-item.missed {
+            color: #aaa;
+        }
+
+        .restart-btn {
+            background: var(--grandma-yellow);
+            color: var(--grandma-brown);
+            border: none;
+            padding: 1.2rem 3rem;
+            font-size: 1.3rem;
+            font-weight: 900;
+            border-radius: 50px;
+            cursor: pointer;
+            font-family: inherit;
+            box-shadow: 0 6px 0 #C9A227;
+            transition: all 0.2s;
+        }
+
+        .restart-btn:hover {
+            transform: translateY(-3px);
+        }
+
+        /* ===== 輔助效果 ===== */
+        .cart-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.3);
+            z-index: 150;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .cart-overlay.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .hint-badge {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: var(--grandma-orange);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            z-index: 50;
+            transition: all 0.3s;
+        }
+
+        .hint-badge:hover {
+            transform: scale(1.05);
+        }
+
+        /* Admin panel (hidden) */
+        .admin-panel {
+            position: fixed;
+            top: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1a1a2e;
+            color: #00ff00;
+            padding: 2rem;
+            border-radius: 10px;
+            font-family: 'Courier Prime', monospace;
+            z-index: 600;
+            display: none;
+            min-width: 400px;
+        }
+
+        .admin-panel.show {
+            display: block;
+        }
+
+        .admin-panel h2 {
+            color: #ff0000;
+            margin-bottom: 1rem;
+        }
+
+        .admin-panel p {
+            margin: 0.5rem 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- 遊戲開始畫面 -->
+    <div class="game-intro" id="gameIntro">
+        <div class="intro-grandma">👵</div>
+        <h1 class="intro-title">阿嬤的 Bug 獵場</h1>
+        <p class="intro-subtitle">歡迎來到充滿 Bug 的菜市場！</p>
+        
+        <div class="intro-rules">
+            <h3>📋 遊戲規則</h3>
+            <ul>
+                <li>這是一個「故意寫壞」的購物網站</li>
+                <li>你的任務是找出所有隱藏的 Bug</li>
+                <li>試試看輸入奇怪的數字、重複使用優惠券...</li>
+                <li>每找到一個 Bug，阿嬤會告訴你對應的章節！</li>
+                <li>限時 5 分鐘，看你能找到幾個 Bug？</li>
+            </ul>
+        </div>
+        
+        <button class="start-btn" onclick="startGame()">
+            🎮 開始挑戰！
+        </button>
+    </div>
+
+    <!-- 遊戲 HUD -->
+    <div class="game-hud">
+        <div class="hud-left">
+            <div class="hud-grandma">👵</div>
+            <div class="hud-title">
+                阿嬤的菜市場
+                <span>Bug 獵場挑戰賽</span>
+            </div>
+        </div>
+        <div class="hud-stats">
+            <div class="stat-box">
+                <div class="stat-label">發現 Bug</div>
+                <div class="stat-value" id="bugCount">0</div>
+            </div>
+            <div class="stat-box" id="timerBox">
+                <div class="stat-label">剩餘時間</div>
+                <div class="stat-value" id="timer">5:00</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">總 Bug 數</div>
+                <div class="stat-value" id="totalBugs">8</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 購物網站主體 -->
+    <div class="shop-container">
+        <header class="shop-header">
+            <div class="shop-logo">
+                <div class="shop-logo-icon">🥬</div>
+                <div class="shop-logo-text">
+                    <h1>阿嬤的菜市場</h1>
+                    <p>最新鮮的在地好食材</p>
+                </div>
+            </div>
+            <div class="shop-actions">
+                <button class="login-btn" onclick="showLogin()">
+                    👤 會員登入
+                </button>
+                <button class="cart-btn" onclick="toggleCart()">
+                    🛒 購物車
+                    <span class="cart-count" id="cartCount">0</span>
+                </button>
+            </div>
+        </header>
+
+        <div class="promo-banner">
+            <div class="promo-text">
+                <h2>🎉 新會員限定！</h2>
+                <p>輸入優惠碼立即享 8 折優惠！（可重複使用？🤔）</p>
+            </div>
+            <div class="promo-coupon">
+                <span>優惠代碼</span>
+                <strong>GRANDMA20</strong>
+            </div>
+        </div>
+
+        <div class="products-grid" id="productsGrid">
+            <!-- 商品會由 JS 動態生成 -->
+        </div>
+    </div>
+
+    <!-- 購物車遮罩 -->
+    <div class="cart-overlay" id="cartOverlay" onclick="toggleCart()"></div>
+
+    <!-- 購物車面板 -->
+    <div class="cart-panel" id="cartPanel">
+        <div class="cart-header">
+            <h2>🛒 購物車</h2>
+            <button class="close-cart" onclick="toggleCart()">✕</button>
+        </div>
+        <div class="cart-items" id="cartItems">
+            <div class="cart-empty">
+                <span>🛒</span>
+                <p>購物車是空的～<br>快去選購新鮮好菜吧！</p>
+            </div>
+        </div>
+        <div class="cart-footer">
+            <div class="coupon-input">
+                <input type="text" id="couponInput" placeholder="輸入優惠碼">
+                <button onclick="applyCoupon()">套用</button>
+            </div>
+            <div class="cart-totals">
+                <div class="cart-total-row">
+                    <span>小計</span>
+                    <span id="subtotal">$0</span>
+                </div>
+                <div class="cart-total-row discount" id="discountRow" style="display: none;">
+                    <span>折扣</span>
+                    <span id="discount">-$0</span>
+                </div>
+                <div class="cart-total-row final">
+                    <span>總計</span>
+                    <span id="total">$0</span>
+                </div>
+            </div>
+            <button class="checkout-btn" onclick="checkout()">
+                💳 前往結帳
+            </button>
+        </div>
+    </div>
+
+    <!-- 登入彈窗 -->
+    <div class="modal-overlay" id="loginModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>👤 會員登入</h2>
+                <button class="modal-close" onclick="hideLogin()">✕</button>
+            </div>
+            <form onsubmit="return handleLogin(event)">
+                <div class="form-group">
+                    <label>帳號</label>
+                    <input type="text" id="loginUser" placeholder="請輸入帳號">
+                </div>
+                <div class="form-group">
+                    <label>密碼</label>
+                    <input type="password" id="loginPass" placeholder="請輸入密碼">
+                </div>
+                <button type="submit" class="login-submit">登入</button>
+            </form>
+            <div class="login-hint">
+                💡 提示：阿嬤說登入系統有點⋯⋯不太安全？試試看特別的輸入吧！
+            </div>
+        </div>
+    </div>
+
+    <!-- Bug 發現提示 -->
+    <div class="bug-toast" id="bugToast">
+        <button class="bug-toast-close" onclick="hideBugToast()">✕</button>
+        <div class="bug-toast-header">
+            <span class="bug-toast-icon">🐛</span>
+            <span class="bug-toast-title" id="bugTitle">發現 Bug！</span>
+            <span class="bug-toast-chapter" id="bugChapter">第 X 章</span>
+        </div>
+        <p class="bug-toast-message" id="bugMessage">
+            阿嬤說：這就是書中提到的 XX 啦！
+        </p>
+    </div>
+
+    <!-- 結帳結果 -->
+    <div class="checkout-overlay" id="checkoutOverlay">
+        <div class="checkout-result">
+            <div class="checkout-icon" id="checkoutIcon">🧾</div>
+            <h2 class="checkout-title" id="checkoutTitle">交易完成</h2>
+            <div class="checkout-amount" id="checkoutAmount">$0</div>
+            <p class="checkout-message" id="checkoutMessage">感謝您的購買！</p>
+            <button class="checkout-close" onclick="closeCheckout()">確認</button>
+        </div>
+    </div>
+
+    <!-- 遊戲結束畫面 -->
+    <div class="game-over" id="gameOver">
+        <div class="game-over-icon">🏆</div>
+        <h1 class="game-over-title">挑戰結束！</h1>
+        <div class="game-over-stats">
+            <div class="game-over-bugs" id="finalBugs">0</div>
+            <div class="game-over-label">個 Bug</div>
+            <div class="game-over-rank" id="rank">測試新手</div>
+        </div>
+        <div class="bug-list" id="bugList">
+            <h3>🐛 Bug 清單</h3>
+            <!-- 動態生成 -->
+        </div>
+        <button class="restart-btn" onclick="restartGame()">
+            🔄 再玩一次
+        </button>
+    </div>
+
+    <!-- 隱藏的 Admin 面板 -->
+    <div class="admin-panel" id="adminPanel">
+        <h2>⚠️ 後台管理系統</h2>
+        <p>歡迎，管理員！</p>
+        <p>今日訂單：<span style="color: #ffff00">1,234</span> 筆</p>
+        <p>今日營收：<span style="color: #ffff00">$567,890</span></p>
+        <p>會員總數：<span style="color: #ffff00">9,999</span> 人</p>
+        <p style="margin-top: 1rem; color: #ff6b6b;">
+            這就是 SQL Injection 的威力！<br>
+            任何人都能用 ' OR '1'='1 進來！
+        </p>
+    </div>
+
+    <!-- 提示徽章 -->
+    <div class="hint-badge" onclick="showHint()">
+        💡 提示
+    </div>
+
+    <script>
+        // ===== 遊戲狀態 =====
+        const gameState = {
+            started: false,
+            timeLeft: 300, // 5 分鐘
+            bugsFound: new Set(),
+            cart: [],
+            appliedCoupons: [],
+            discountPercent: 0,
+            totalBugs: 8
+        };
+
+        // ===== Bug 定義 =====
+        const bugs = {
+            negativeQty: {
+                name: '負數購買',
+                chapter: '第 5 章',
+                message: '阿嬤說：「這就是邊界值分析啦！怎麼可以買 -1 個東西？你沒看書喔？」',
+                hint: '試試看購買數量輸入負數...'
+            },
+            zeroQty: {
+                name: '零數量結帳',
+                chapter: '第 5 章',
+                message: '阿嬤說：「邊界值要測 0 啦！買 0 個也能結帳是怎樣？」',
+                hint: '購物車裡放 0 個商品試試看...'
+            },
+            hugeQty: {
+                name: '超大數量',
+                chapter: '第 5 章',
+                message: '阿嬤說：「上限沒設好就會出事！誰家能存 99999 顆高麗菜？」',
+                hint: '試試看輸入一個超級大的數字...'
+            },
+            doubleCoupon: {
+                name: '優惠券疊加',
+                chapter: '第 6 章',
+                message: '阿嬤說：「這是狀態測試的經典錯誤！優惠券用一次就該失效，怎麼可以一直疊加？」',
+                hint: '同一張優惠券可以用幾次呢？'
+            },
+            sqlInjection: {
+                name: 'SQL Injection',
+                chapter: '第 8 章',
+                message: '阿嬤說：「資安漏洞啊！帳號密碼都沒做好過濾，駭客最愛這種網站了！」',
+                hint: '登入時試試看特別的字元...'
+            },
+            negativeTotal: {
+                name: '負數金額',
+                chapter: '第 5 章',
+                message: '阿嬤說：「折扣後金額變負的？這樣店都要倒了！邊界值沒測好啦！」',
+                hint: '折扣有上限嗎？'
+            },
+            floatQty: {
+                name: '小數數量',
+                chapter: '第 4 章',
+                message: '阿嬤說：「等價類劃分要做好！0.5 顆蘋果是什麼鬼？」',
+                hint: '數量一定要是整數嗎？'
+            },
+            xss: {
+                name: 'XSS 攻擊',
+                chapter: '第 8 章',
+                message: '阿嬤說：「又是資安問題！輸入沒過濾就直接顯示，太危險了！」',
+                hint: '優惠碼輸入框會過濾特殊字元嗎？'
+            }
+        };
+
+        // ===== 商品資料 =====
+        const products = [
+            { id: 1, name: '有機高麗菜', emoji: '🥬', price: 45, unit: '顆', origin: '雲林' },
+            { id: 2, name: '紅蘿蔔', emoji: '🥕', price: 30, unit: '斤', origin: '彰化' },
+            { id: 3, name: '新鮮蘋果', emoji: '🍎', price: 35, unit: '顆', origin: '梨山', originalPrice: 50 },
+            { id: 4, name: '香甜香蕉', emoji: '🍌', price: 25, unit: '串', origin: '屏東' },
+            { id: 5, name: '有機番茄', emoji: '🍅', price: 60, unit: '盒', origin: '嘉義' },
+            { id: 6, name: '新鮮雞蛋', emoji: '🥚', price: 80, unit: '盒', origin: '南投' },
+            { id: 7, name: '手工豆腐', emoji: '🧈', price: 40, unit: '塊', origin: '台南' },
+            { id: 8, name: '阿嬤的私房滷肉', emoji: '🍖', price: 120, unit: '份', origin: '阿嬤家', originalPrice: 150 }
+        ];
+
+        // ===== 初始化 =====
+        function init() {
+            renderProducts();
+        }
+
+        function renderProducts() {
+            const grid = document.getElementById('productsGrid');
+            grid.innerHTML = products.map(p => `
+                <div class="product-card">
+                    <div class="product-image">${p.emoji}</div>
+                    <div class="product-info">
+                        <h3 class="product-name">${p.name}</h3>
+                        <p class="product-origin">📍 ${p.origin}</p>
+                        <div class="product-price">
+                            <span class="price-current">$${p.price}</span>
+                            <span class="price-unit">/ ${p.unit}</span>
+                            ${p.originalPrice ? `<span class="price-original">$${p.originalPrice}</span>` : ''}
+                        </div>
+                        <div class="product-qty">
+                            <button class="qty-btn" onclick="changeQty(${p.id}, -1)">−</button>
+                            <input type="text" class="qty-input" id="qty-${p.id}" value="1">
+                            <button class="qty-btn" onclick="changeQty(${p.id}, 1)">+</button>
+                        </div>
+                        <button class="add-cart-btn" onclick="addToCart(${p.id})">
+                            🛒 加入購物車
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // ===== 遊戲控制 =====
+        function startGame() {
+            gameState.started = true;
+            document.getElementById('gameIntro').classList.add('hidden');
+            startTimer();
+        }
+
+        function startTimer() {
+            const timerEl = document.getElementById('timer');
+            const timerBox = document.getElementById('timerBox');
+            
+            const interval = setInterval(() => {
+                if (!gameState.started) {
+                    clearInterval(interval);
+                    return;
+                }
+                
+                gameState.timeLeft--;
+                const mins = Math.floor(gameState.timeLeft / 60);
+                const secs = gameState.timeLeft % 60;
+                timerEl.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+                
+                if (gameState.timeLeft <= 30) {
+                    timerBox.classList.add('timer-critical');
+                }
+                
+                if (gameState.timeLeft <= 0) {
+                    clearInterval(interval);
+                    endGame();
+                }
+            }, 1000);
+        }
+
+        function endGame() {
+            gameState.started = false;
+            document.getElementById('gameOver').classList.add('show');
+            document.getElementById('finalBugs').textContent = gameState.bugsFound.size;
+            
+            // 計算等級
+            const count = gameState.bugsFound.size;
+            let rank = '';
+            if (count === 0) rank = '🌱 測試萌新';
+            else if (count <= 2) rank = '🐣 測試新手';
+            else if (count <= 4) rank = '🦊 測試好手';
+            else if (count <= 6) rank = '🦁 測試老鳥';
+            else if (count <= 7) rank = '🐉 測試大師';
+            else rank = '👵 阿嬤認證！';
+            
+            document.getElementById('rank').textContent = rank;
+            
+            // 顯示 Bug 清單
+            const listEl = document.getElementById('bugList');
+            listEl.innerHTML = '<h3>🐛 Bug 清單</h3>' + 
+                Object.entries(bugs).map(([key, bug]) => `
+                    <div class="bug-list-item ${gameState.bugsFound.has(key) ? 'found' : 'missed'}">
+                        ${gameState.bugsFound.has(key) ? '✅' : '❌'}
+                        ${bug.name} (${bug.chapter})
+                    </div>
+                `).join('');
+        }
+
+        function restartGame() {
+            location.reload();
+        }
+
+        // ===== Bug 發現系統 =====
+        function foundBug(bugKey) {
+            if (gameState.bugsFound.has(bugKey)) return;
+            
+            gameState.bugsFound.add(bugKey);
+            document.getElementById('bugCount').textContent = gameState.bugsFound.size;
+            
+            const bug = bugs[bugKey];
+            document.getElementById('bugTitle').textContent = `發現 Bug：${bug.name}`;
+            document.getElementById('bugChapter').textContent = bug.chapter;
+            document.getElementById('bugMessage').textContent = bug.message;
+            
+            document.getElementById('bugToast').classList.add('show');
+            
+            // 5秒後自動關閉
+            setTimeout(() => {
+                document.getElementById('bugToast').classList.remove('show');
+            }, 5000);
+
+            // 檢查是否全部找到
+            if (gameState.bugsFound.size >= gameState.totalBugs) {
+                setTimeout(() => {
+                    endGame();
+                }, 2000);
+            }
+        }
+
+        function hideBugToast() {
+            document.getElementById('bugToast').classList.remove('show');
+        }
+
+        // ===== 購物車功能 =====
+        function changeQty(productId, delta) {
+            const input = document.getElementById(`qty-${productId}`);
+            let val = parseFloat(input.value) || 0;
+            input.value = val + delta;
+        }
+
+        function addToCart(productId) {
+            const input = document.getElementById(`qty-${productId}`);
+            const qty = parseFloat(input.value);
+            const product = products.find(p => p.id === productId);
+            
+            // Bug: 負數數量
+            if (qty < 0) {
+                foundBug('negativeQty');
+            }
+            
+            // Bug: 小數數量
+            if (qty !== Math.floor(qty)) {
+                foundBug('floatQty');
+            }
+            
+            // Bug: 超大數量
+            if (qty > 9999) {
+                foundBug('hugeQty');
+            }
+            
+            // 加入購物車（故意不檢查）
+            const existing = gameState.cart.find(item => item.id === productId);
+            if (existing) {
+                existing.qty += qty;
+            } else {
+                gameState.cart.push({
+                    ...product,
+                    qty: qty
+                });
+            }
+            
+            updateCartUI();
+            input.value = 1;
+        }
+
+        function updateCartUI() {
+            const cartItems = document.getElementById('cartItems');
+            const cartCount = document.getElementById('cartCount');
+            
+            const totalItems = gameState.cart.reduce((sum, item) => sum + item.qty, 0);
+            cartCount.textContent = totalItems;
+            
+            if (gameState.cart.length === 0) {
+                cartItems.innerHTML = `
+                    <div class="cart-empty">
+                        <span>🛒</span>
+                        <p>購物車是空的～<br>快去選購新鮮好菜吧！</p>
+                    </div>
+                `;
+            } else {
+                cartItems.innerHTML = gameState.cart.map((item, idx) => `
+                    <div class="cart-item">
+                        <span class="cart-item-emoji">${item.emoji}</span>
+                        <div class="cart-item-info">
+                            <div class="cart-item-name">${item.name}</div>
+                            <div class="cart-item-price">$${item.price} × ${item.qty}</div>
+                        </div>
+                        <button class="cart-item-remove" onclick="removeFromCart(${idx})">🗑️</button>
+                    </div>
+                `).join('');
+            }
+            
+            updateTotals();
+        }
+
+        function removeFromCart(index) {
+            gameState.cart.splice(index, 1);
+            updateCartUI();
+        }
+
+        function updateTotals() {
+            const subtotal = gameState.cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+            const discountAmount = Math.round(subtotal * gameState.discountPercent / 100);
+            const total = subtotal - discountAmount;
+            
+            document.getElementById('subtotal').textContent = `$${subtotal}`;
+            document.getElementById('discount').textContent = `-$${discountAmount}`;
+            document.getElementById('total').textContent = `$${total}`;
+            
+            const discountRow = document.getElementById('discountRow');
+            if (gameState.discountPercent > 0) {
+                discountRow.style.display = 'flex';
+            } else {
+                discountRow.style.display = 'none';
+            }
+            
+            // Bug: 負數金額
+            if (total < 0) {
+                foundBug('negativeTotal');
+            }
+        }
+
+        function toggleCart() {
+            document.getElementById('cartPanel').classList.toggle('open');
+            document.getElementById('cartOverlay').classList.toggle('show');
+        }
+
+        // ===== 優惠券系統 =====
+        function applyCoupon() {
+            const input = document.getElementById('couponInput');
+            const code = input.value.trim();
+            
+            // Bug: XSS
+            if (code.includes('<') || code.includes('>')) {
+                foundBug('xss');
+                alert('阿嬤說：輸入怎麼有奇怪的符號？（XSS 漏洞發現！）');
+                return;
+            }
+            
+            if (code.toUpperCase() === 'GRANDMA20') {
+                // Bug: 優惠券可重複使用
+                gameState.discountPercent += 20;
+                gameState.appliedCoupons.push(code);
+                
+                if (gameState.appliedCoupons.length > 1) {
+                    foundBug('doubleCoupon');
+                }
+                
+                updateTotals();
+                alert(`優惠碼套用成功！目前折扣：${gameState.discountPercent}%`);
+            } else if (code) {
+                alert('優惠碼無效！');
+            }
+            
+            input.value = '';
+        }
+
+        // ===== 結帳系統 =====
+        function checkout() {
+            if (gameState.cart.length === 0) {
+                alert('購物車是空的！');
+                return;
+            }
+            
+            const subtotal = gameState.cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+            const discountAmount = Math.round(subtotal * gameState.discountPercent / 100);
+            const total = subtotal - discountAmount;
+            
+            // Bug: 零數量結帳
+            const hasZero = gameState.cart.some(item => item.qty === 0);
+            if (hasZero) {
+                foundBug('zeroQty');
+            }
+            
+            // 顯示結帳結果
+            const overlay = document.getElementById('checkoutOverlay');
+            const icon = document.getElementById('checkoutIcon');
+            const title = document.getElementById('checkoutTitle');
+            const amount = document.getElementById('checkoutAmount');
+            const message = document.getElementById('checkoutMessage');
+            
+            if (total < 0) {
+                icon.textContent = '💰';
+                title.textContent = '恭喜獲得退款！';
+                amount.textContent = `+$${Math.abs(total)}`;
+                amount.classList.add('negative');
+                message.textContent = '感謝您發現這個 Bug！折扣太多反而變成退款了～';
+            } else {
+                icon.textContent = '🧾';
+                title.textContent = '交易完成';
+                amount.textContent = `$${total}`;
+                amount.classList.remove('negative');
+                message.textContent = `感謝您購買 ${gameState.cart.length} 項商品！`;
+            }
+            
+            overlay.classList.add('show');
+            toggleCart();
+        }
+
+        function closeCheckout() {
+            document.getElementById('checkoutOverlay').classList.remove('show');
+            gameState.cart = [];
+            gameState.appliedCoupons = [];
+            gameState.discountPercent = 0;
+            updateCartUI();
+        }
+
+        // ===== 登入系統 =====
+        function showLogin() {
+            document.getElementById('loginModal').classList.add('show');
+        }
+
+        function hideLogin() {
+            document.getElementById('loginModal').classList.remove('show');
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const user = document.getElementById('loginUser').value;
+            const pass = document.getElementById('loginPass').value;
+            
+            // Bug: SQL Injection
+            if (user.includes("'") || user.includes("OR") || user.includes("=") ||
+                pass.includes("'") || pass.includes("OR") || pass.includes("=")) {
+                foundBug('sqlInjection');
+                hideLogin();
+                document.getElementById('adminPanel').classList.add('show');
+                setTimeout(() => {
+                    document.getElementById('adminPanel').classList.remove('show');
+                }, 5000);
+                return false;
+            }
+            
+            // 正常登入失敗
+            alert('帳號或密碼錯誤！');
+            return false;
+        }
+
+        // ===== 提示系統 =====
+        function showHint() {
+            const unFound = Object.entries(bugs)
+                .filter(([key]) => !gameState.bugsFound.has(key))
+                .map(([, bug]) => bug.hint);
+            
+            if (unFound.length === 0) {
+                alert('🎉 你已經找到所有 Bug 了！');
+            } else {
+                const hint = unFound[Math.floor(Math.random() * unFound.length)];
+                alert(`💡 提示：${hint}`);
+            }
+        }
+
+        // 初始化
+        init();
+    </script>
+</body>
+</html>

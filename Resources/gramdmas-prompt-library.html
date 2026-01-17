@@ -1,0 +1,1357 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>測試阿嬤的 AI 咒語錦囊 | QA Grandma's Prompt Library</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50">
+    <div id="app"></div>
+
+    <script>
+    // ===== Prompt Database =====
+    const promptDatabase = {
+        categories: [
+            {
+                id: 'part1',
+                name: 'Part 1 測試生活哲學',
+                icon: '🏠',
+                scenarios: [
+                    {
+                        id: 'test-strategy',
+                        name: '測試策略與心智圖',
+                        chapter: 1,
+                        chapterTitle: '重回案發現現場？Bug怎麼成為軟體世界的幽靈？',
+                        keywords: ['測試策略', '心智圖', '探索性測試'],
+                        basic: {
+                            template: `你是一位資深測試工程師。請針對以下系統建立一份「探索性測試心智圖」：
+
+【待測系統】{feature}
+
+請使用心智圖的結構，涵蓋：
+1. 核心功能區域（主要分支）
+2. 每個功能的子功能（次要分支）
+3. 可能的風險區域標註
+4. 測試優先順序建議
+
+輸出格式：以縮排文字呈現心智圖結構`,
+                            description: '建立探索性測試心智圖'
+                        },
+                        advanced: {
+                            template: `你是一位測試架構師，專精於測試策略規劃。請為以下系統建立完整的「測試策略藍圖」：
+
+【待測系統】{feature}
+
+🎯 第一步：測試範圍定義
+- 這個系統的核心價值是什麼？
+- 誰是主要使用者？他們的使用情境是什麼？
+- 哪些功能是「必須完美運作」的關鍵路徑？
+
+🎯 第二步：風險評估
+- 哪些模組最近被頻繁修改？
+- 過去哪裡最常出現 Bug？
+- 如果這個功能壞掉，對使用者的影響有多大？
+
+🎯 第三步：測試方法選擇
+- 哪些適合自動化測試？
+- 哪些需要探索性測試？
+- 哪些需要效能或安全測試？
+
+請輸出：
+1. 完整的測試策略文件（一頁式）
+2. 風險熱圖（以表格呈現）
+3. 測試執行順序建議`,
+                            locked: true,
+                            description: '完整測試策略藍圖規劃'
+                        }
+                    },
+                    {
+                        id: 'test-case',
+                        name: '測試案例設計',
+                        chapter: 2,
+                        chapterTitle: '大禹治水三過家門不入，我三進家門不通',
+                        keywords: ['測試案例', 'Test Case', '前置條件'],
+                        basic: {
+                            template: `請幫我設計「{feature}」的測試案例。
+
+每個測試案例請包含：
+1. 測試案例 ID
+2. 測試案例名稱
+3. 前置條件（Pre-conditions）
+4. 測試步驟（Steps）
+5. 預期結果（Expected Result）
+6. 測試優先級（High/Medium/Low）
+
+請以表格形式呈現。`,
+                            description: '標準測試案例設計'
+                        },
+                        advanced: {
+                            template: `你是測試案例設計專家。請為「{feature}」設計一套完整的測試案例套件。
+
+📋 測試案例設計原則
+1. 獨立性：每個案例應該能獨立執行
+2. 可追溯性：對應到需求規格
+3. 可重複性：相同步驟應產生相同結果
+
+🎯 請涵蓋以下面向：
+
+【正向測試】
+- Happy Path（快樂路徑）
+- 所有合法輸入的組合
+
+【負向測試】
+- 無效輸入（格式錯誤、超出範圍）
+- 權限不足的操作
+- 資源不存在的情況
+
+【邊界測試】
+- 最小值、最大值
+- 空值、null 值
+
+【異常處理】
+- 網路中斷
+- 服務超時
+- 並發操作
+
+請輸出：
+1. 測試案例清單（含 ID、名稱、步驟、預期結果）
+2. 測試覆蓋率矩陣
+3. 執行順序建議`,
+                            locked: true,
+                            description: '完整測試案例套件設計'
+                        }
+                    },
+                    {
+                        id: 'equivalence',
+                        name: '等價類劃分法',
+                        chapter: 4,
+                        chapterTitle: '洗衣哲學：衣服分類洗，測試分類測',
+                        keywords: ['等價類', 'Equivalence Class', '分類'],
+                        basic: {
+                            template: `請使用「等價類劃分法」為以下功能設計測試案例：
+
+【功能規格】{feature}
+
+請執行以下分析：
+1. 識別所有輸入參數
+2. 為每個參數劃分「有效等價類」和「無效等價類」
+3. 從每個等價類中選取一個代表值
+4. 設計測試案例，確保每個等價類至少被覆蓋一次
+
+輸出格式：
+- 等價類劃分表（參數 | 有效等價類 | 無效等價類）
+- 測試案例清單（案例ID | 輸入值 | 預期結果）`,
+                            description: '等價類劃分法測試設計'
+                        },
+                        advanced: {
+                            template: `你是黑箱測試專家。請對「{feature}」進行深度等價類分析。
+
+🧺 阿嬤的洗衣哲學
+「衣服要分類洗，白的、深色的、淺色的分開，才不會染色。測試也一樣，要把輸入分類，才不會漏掉重要的情況。」
+
+📊 深度分析維度：
+
+【輸入域分析】
+- 識別所有顯性輸入（使用者直接輸入）
+- 識別所有隱性輸入（系統狀態、環境變數）
+- 識別輸入間的依賴關係
+
+【等價類細分】
+- 有效等價類（進一步細分為：常見值、極端值、特殊值）
+- 無效等價類（格式錯誤、範圍錯誤、型別錯誤、null/空值）
+
+【組合策略】
+- 單一無效輸入 + 其他皆有效
+- 多重無效輸入組合
+- 邊界交叉組合
+
+請輸出：
+1. 完整等價類矩陣
+2. 測試案例清單（含優先級）
+3. 覆蓋率分析報告`,
+                            locked: true,
+                            description: '深度等價類分析與組合'
+                        }
+                    },
+                    {
+                        id: 'boundary',
+                        name: '邊界值分析法',
+                        chapter: 5,
+                        chapterTitle: '對腳踏車狂熱的瑞典人─共享單車計費',
+                        keywords: ['邊界值', 'Boundary Value', 'BVA'],
+                        basic: {
+                            template: `請使用「邊界值分析法」為以下功能設計測試案例：
+
+【功能規格】{feature}
+
+請針對每個有範圍限制的參數，設計以下測試點：
+- 最小值 (min)
+- 最小值 -1 (min-1)
+- 最小值 +1 (min+1)
+- 最大值 (max)
+- 最大值 -1 (max-1)
+- 最大值 +1 (max+1)
+
+輸出格式：
+- 邊界值分析表（參數 | 邊界點 | 測試值 | 預期結果）`,
+                            description: '標準邊界值分析'
+                        },
+                        advanced: {
+                            template: `你是邊界值測試大師。請對「{feature}」進行多維度邊界分析。
+
+🚲 瑞典人的共享單車智慧
+「計費系統的邊界，就是金錢流失的關鍵點。30分鐘免費，31分鐘就要收費，這一分鐘的差異，可能影響數百萬的營收。」
+
+🎯 單一維度邊界
+針對每個數值參數，分析：
+- 精確邊界點（min, max）
+- 邊界內側（min+1, max-1）
+- 邊界外側（min-1, max+1）
+
+🎯 多維度邊界組合
+當多個參數同時處於邊界值時：
+- 所有參數同時在最小值
+- 所有參數同時在最大值
+- 一個在最小、其他在最大的組合
+
+🎯 隱藏邊界
+- 時間邊界（跨日、跨月、跨年、閏年 2/29）
+- 精度邊界（浮點數運算 0.1 + 0.2 ≠ 0.3）
+- 容量邊界（陣列長度、字串長度）
+- 資源邊界（記憶體、連線數）
+
+請輸出：
+1. 完整邊界值測試矩陣
+2. 高風險邊界排名（Top 10）
+3. 自動化測試建議`,
+                            locked: true,
+                            description: '多維度邊界深度分析'
+                        }
+                    },
+                    {
+                        id: 'decision-table',
+                        name: '決策表測試',
+                        chapter: 6,
+                        chapterTitle: '人生幸福的決策表─用愛情學會測試設計',
+                        keywords: ['決策表', 'Decision Table', '條件組合'],
+                        basic: {
+                            template: `請使用「決策表」為以下業務規則設計測試案例：
+
+【業務規則】{feature}
+
+請執行以下步驟：
+1. 識別所有的「條件」（Conditions）
+2. 識別所有的「動作/結果」（Actions）
+3. 列出所有可能的條件組合
+4. 確定每個組合對應的動作
+
+以 Markdown 表格格式輸出決策表。`,
+                            description: '基礎決策表設計'
+                        },
+                        advanced: {
+                            template: `你是決策表測試專家。請為以下業務邏輯建立完整的決策表分析。
+
+【業務規則】{feature}
+
+💍 阿嬤的愛情決策表
+「婚姻幸福的條件：有房、有車、有存款、脾氣好。四個條件的組合，決定了妳要不要嫁。」
+
+📊 決策表建立步驟
+
+步驟一：條件識別
+- 識別所有影響結果的條件
+- 確定每個條件的可能值（True/False 或多值）
+
+步驟二：組合計算
+- 計算總組合數（2^N 或 ∏各條件值數量）
+- 識別是否有互斥條件（不可能同時發生）
+
+步驟三：化簡決策表
+- 合併結果相同的規則
+- 使用「-」標記不關心的條件（謹慎使用！）
+
+步驟四：驗證完整性
+- 檢查是否有遺漏的組合
+- 檢查是否有矛盾的規則
+
+請輸出：
+1. 完整決策表（Markdown 格式）
+2. 化簡後的決策表
+3. 測試案例清單
+4. 邊界規則特別標註`,
+                            locked: true,
+                            description: '完整決策表分析與驗證'
+                        }
+                    },
+                    {
+                        id: 'error-guessing',
+                        name: '錯誤推測法',
+                        chapter: 7,
+                        chapterTitle: '女人的第六感真的很準嗎？',
+                        keywords: ['錯誤推測', 'Error Guessing', '直覺'],
+                        basic: {
+                            template: `請使用「錯誤推測法」為以下功能找出潛在的 Bug 熱點：
+
+【功能描述】{feature}
+
+請基於常見的開發錯誤模式，推測可能出問題的地方：
+1. 邊界條件處理
+2. 空值/null 處理
+3. 特殊字元處理
+4. 並發操作
+5. 異常流程
+
+輸出：潛在 Bug 清單及對應的測試案例`,
+                            description: '基礎錯誤推測分析'
+                        },
+                        advanced: {
+                            template: `你是資深測試工程師，擁有十年的 Bug 狩獵經驗。請對「{feature}」進行「第六感」分析。
+
+👩 女人的第六感原理
+「太太對先生說：『你最近是不是有什麼事瞞著我？』這不是魔法，而是基於長期觀察建立的『基準線』，一旦行為偏離常態，直覺就會觸發警報。」
+
+🎯 建立你的測試直覺
+
+【步驟一：建立基準線】
+根據經驗，這類功能通常會在哪裡出錯？
+- 這個開發者/團隊過去常犯什麼錯？
+- 這類架構的常見陷阱是什麼？
+
+【步驟二：偵測異常】
+審視需求文件和程式碼：
+- 規格寫得太簡單的地方（可能沒考慮周全）
+- 邏輯特別複雜的地方（可能會漏掉條件）
+- 最近被修改的地方（可能引入新問題）
+
+【步驟三：組合判斷】
+結合以下因素推測高風險區域：
+- 時程壓力下寫的程式碼
+- 新進工程師負責的模組
+- 跨團隊整合的介面
+- 第三方服務依賴
+
+🔮 常見的 Bug 藏身處
+1. 輸入驗證（空格、特殊字元、超長輸入）
+2. 狀態管理（競爭條件、狀態不一致）
+3. 錯誤處理（異常被吞掉、錯誤訊息不正確）
+4. 資料轉換（時區、編碼、精度）
+5. 快取問題（髒資料、過期資料）
+
+請輸出：
+1. Bug 熱點地圖（風險區域 × 可能性）
+2. 前 10 個最該優先測試的案例
+3. 探索性測試建議路徑`,
+                            locked: true,
+                            description: '深度錯誤推測與風險分析'
+                        }
+                    },
+                    {
+                        id: 'state-machine',
+                        name: '狀態機測試',
+                        chapter: 9,
+                        chapterTitle: '情緒化選手？用狀態機解析隊友情緒波動的測試案例',
+                        keywords: ['狀態機', 'State Machine', '狀態轉換'],
+                        basic: {
+                            template: `請使用「狀態機」為以下功能設計測試案例：
+
+【功能描述】{feature}
+
+請建立：
+1. 識別所有可能的「狀態」（States）
+2. 識別所有「事件/觸發條件」（Events/Triggers）
+3. 定義「狀態轉換規則」（Transitions）
+4. 設計覆蓋所有轉換的測試案例
+
+輸出：狀態轉換表及測試案例`,
+                            description: '基礎狀態機測試設計'
+                        },
+                        advanced: {
+                            template: `你是狀態機測試專家。請為「{feature}」建立完整的狀態轉換測試。
+
+🏀 球員情緒狀態機
+「隊友的表現像情緒化選手：自信 → 投進球 → 更自信；失誤 → 沮喪 → 更容易失誤。這就是狀態轉換的連鎖反應。」
+
+📊 狀態機建模
+
+【狀態識別】
+- 初始狀態
+- 穩定狀態
+- 終止狀態
+- 異常狀態
+
+【事件識別】
+- 使用者操作觸發的事件
+- 系統內部觸發的事件
+- 時間觸發的事件
+- 外部系統觸發的事件
+
+【轉換規則】
+- 合法轉換（從 A 到 B）
+- 非法轉換（不應該發生的轉換）
+- 守衛條件（轉換的前提條件）
+
+🧪 測試策略
+
+【0-switch coverage】覆蓋所有狀態
+【1-switch coverage】覆蓋所有轉換
+【N-switch coverage】覆蓋連續 N 個轉換的序列
+
+請輸出：
+1. 狀態轉換圖（文字描述）
+2. 狀態轉換表
+3. 測試路徑清單（含 Happy Path 和異常路徑）
+4. 非法轉換測試案例`,
+                            locked: true,
+                            description: '完整狀態機測試覆蓋'
+                        }
+                    },
+                    {
+                        id: 'acc-model',
+                        name: 'ACC 模型',
+                        chapter: 10,
+                        chapterTitle: '連 Google 也使用的 ACC 模型',
+                        keywords: ['ACC', 'Attributes', 'Components', 'Capabilities'],
+                        basic: {
+                            template: `請使用 Google 的「ACC 模型」為以下產品建立測試分析：
+
+【產品描述】{feature}
+
+請分析：
+1. Attributes（屬性）：產品的品質特性
+2. Components（元件）：產品的組成部分
+3. Capabilities（能力）：產品能做什麼
+
+以表格形式呈現 ACC 矩陣`,
+                            description: '基礎 ACC 模型分析'
+                        },
+                        advanced: {
+                            template: `你是 Google 測試架構師。請使用 ACC 模型為「{feature}」建立完整的測試分析框架。
+
+🔍 ACC 模型介紹
+Google 採用的建模方法，用於快速分解產品並評估測試風險。
+
+【A - Attributes 屬性】
+產品應該具備的品質特性：
+- 功能性（Functionality）
+- 效能（Performance）
+- 安全性（Security）
+- 可用性（Usability）
+- 可靠性（Reliability）
+- 相容性（Compatibility）
+
+【C - Components 元件】
+產品的組成模組：
+- 前端介面
+- 後端 API
+- 資料庫
+- 第三方整合
+- 基礎設施
+
+【C - Capabilities 能力】
+使用者可以做的事情：
+- 核心功能
+- 輔助功能
+- 管理功能
+
+📊 風險評估：繪製風險熱圖
+
+對每個 Component × Capability 的組合評估：
+- 發生問題的可能性（1-5）
+- 問題發生後的影響程度（1-5）
+- 風險分數 = 可能性 × 影響程度
+
+請輸出：
+1. 完整 ACC 矩陣
+2. 風險熱圖（表格形式）
+3. 測試優先級排序
+4. 測試策略建議`,
+                            locked: true,
+                            description: '完整 ACC 模型與風險評估'
+                        }
+                    }
+                ]
+            },
+            {
+                id: 'part2',
+                name: 'Part 2 進階測試分析',
+                icon: '🔬',
+                scenarios: [
+                    {
+                        id: 'pairwise',
+                        name: 'Pairwise Testing',
+                        chapter: 11,
+                        chapterTitle: '不能讓老闆知道的事情：用 Pairwise Testing 讓測試少九成',
+                        keywords: ['Pairwise', '成對測試', 'PICT'],
+                        basic: {
+                            template: `請使用「Pairwise Testing（成對測試）」為以下功能設計測試組合：
+
+【功能參數】{feature}
+
+請執行：
+1. 列出所有測試參數及其可能值
+2. 計算全組合數量
+3. 使用 Pairwise 原理，確保任意兩個參數的組合都至少出現一次
+4. 生成最小測試案例集
+
+輸出：Pairwise 測試矩陣`,
+                            description: '基礎 Pairwise 測試設計'
+                        },
+                        advanced: {
+                            template: `你是組合測試專家。請為「{feature}」設計最佳化的 Pairwise 測試方案。
+
+💡 阿嬤的秘密
+「老闆不需要知道你用 Pairwise，只需要知道你用更少的時間測出更多的 Bug。」
+
+📊 測試參數分析
+
+請列出所有參數：
+- 參數名稱
+- 可能的值
+- 值的數量
+
+計算：
+- 全組合數：N₁ × N₂ × N₃ × ...
+- Pairwise 預估數量
+
+🔧 使用 PICT 工具格式
+
+# 參數定義
+參數1: 值1, 值2, 值3
+參數2: 值1, 值2
+參數3: 值1, 值2, 值3, 值4
+
+# 約束條件（如果有互斥邏輯）
+IF [參數1] = "值1" THEN [參數2] <> "值2";
+
+請輸出：
+1. PICT 輸入檔格式
+2. Pairwise 測試案例表
+3. 覆蓋率分析
+4. 與全組合的比較（減少百分比）`,
+                            locked: true,
+                            description: '完整 Pairwise 測試與 PICT 工具'
+                        }
+                    },
+                    {
+                        id: 'use-case',
+                        name: 'Use Case Testing',
+                        chapter: 13,
+                        chapterTitle: '我要測 Uber Eats，你需要什麼測試方式嗎？',
+                        keywords: ['Use Case', '使用者案例', '使用者旅程'],
+                        basic: {
+                            template: `請使用「Use Case Testing」為以下功能設計測試案例：
+
+【功能描述】{feature}
+
+請建立：
+1. 主要使用者角色（Actors）
+2. 主要使用案例（Use Cases）
+3. 快樂路徑（Happy Path）
+4. 替代流程（Alternative Flows）
+5. 異常流程（Exception Flows）
+
+輸出：Use Case 描述及對應的測試案例`,
+                            description: '基礎 Use Case 測試設計'
+                        },
+                        advanced: {
+                            template: `你是使用者體驗測試專家。請為「{feature}」設計完整的 Use Case 測試方案。
+
+🍔 Uber Eats 的測試思維
+「使用者不在乎你的 API 有多漂亮，他只在乎：我能不能順利點餐、付款、收到食物。」
+
+👤 角色識別（Actors）
+- 主要角色（直接使用系統）
+- 次要角色（間接參與）
+- 系統角色（外部系統）
+
+📋 Use Case 結構
+
+【Use Case 名稱】
+【前置條件】使用者必須先...
+【主要流程 - Happy Path】
+1. 使用者執行 A
+2. 系統回應 B
+3. 使用者執行 C
+4. 系統回應 D
+【後置條件】系統狀態變成...
+
+【替代流程】
+A1. 如果在步驟 2，使用者選擇...
+A2. 系統執行...
+
+【異常流程】
+E1. 如果在步驟 3，系統發生錯誤...
+E2. 系統顯示錯誤訊息...
+
+請輸出：
+1. 完整 Use Case 文件
+2. 測試案例矩陣（Happy Path + 替代 + 異常）
+3. 測試優先級排序
+4. 端到端測試建議`,
+                            locked: true,
+                            description: '完整 Use Case 測試覆蓋'
+                        }
+                    },
+                    {
+                        id: 'soap-opera',
+                        name: 'Soap Opera Testing',
+                        chapter: 14,
+                        chapterTitle: '最衰、最 BG 的艾蜜莉─用 Soap Opera Testing 測出八點檔級的系統崩潰',
+                        keywords: ['Soap Opera', '肥皂劇測試', '探索性測試'],
+                        basic: {
+                            template: `請使用「Soap Opera Testing（肥皂劇測試法）」為以下系統設計探索性測試情境：
+
+【系統描述】{feature}
+
+請設計一個「戲劇化」的測試場景：
+1. 創造一個虛構的使用者角色（有背景故事）
+2. 設計一連串「倒楣」的事件
+3. 讓多個功能產生連鎖反應
+4. 觀察系統如何處理這些極端情況
+
+輸出：Soap Opera 測試劇本`,
+                            description: '基礎 Soap Opera 測試設計'
+                        },
+                        advanced: {
+                            template: `你是探索性測試大師。請為「{feature}」設計一齣「八點檔級」的 Soap Opera 測試劇本。
+
+📺 艾蜜莉的悲慘故事
+「最衰的艾蜜莉：早上手機摔壞、中午信用卡被盜刷、下午老闆要她加班、晚上男友提分手。每一個事件都會觸發系統的不同功能，而這些功能加在一起，就是一場完美風暴。」
+
+🎭 劇本設計原則
+
+【角色塑造】
+- 創造一個有血有肉的角色
+- 給他/她一個背景故事
+- 設定他/她的「倒楣體質」
+
+【情節設計】
+- 設計 5-10 個連續的「災難事件」
+- 每個事件都要觸發系統的某個功能
+- 事件之間要有因果關係或時間關聯
+
+【高潮迭起】
+- 加入「時間壓力」（跨日、月底結算）
+- 加入「資源競爭」（多人同時操作）
+- 加入「外部干擾」（網路不穩、第三方服務異常）
+
+【結局觀察】
+- 系統是否能夠優雅地處理？
+- 資料是否一致？
+- 使用者是否收到正確的提示？
+
+請輸出：
+1. 完整的 Soap Opera 劇本（含角色、場景、事件）
+2. 每個事件對應的系統功能
+3. 預期的系統行為
+4. 潛在的 Bug 熱點`,
+                            locked: true,
+                            description: '完整 Soap Opera 探索性測試'
+                        }
+                    }
+                ]
+            },
+            {
+                id: 'part3',
+                name: 'Part 3 自動化與效能',
+                icon: '🤖',
+                scenarios: [
+                    {
+                        id: 'test-pyramid',
+                        name: '測試金字塔',
+                        chapter: 17,
+                        chapterTitle: 'CP 值最高的測試原則─測試金字塔',
+                        keywords: ['測試金字塔', 'Test Pyramid', '單元測試'],
+                        basic: {
+                            template: `請根據「測試金字塔」原則，為以下功能規劃測試策略：
+
+【功能描述】{feature}
+
+請分析並建議：
+1. 單元測試（Unit Test）：應該測試什麼？
+2. 整合測試（Integration Test）：應該測試什麼？
+3. E2E 測試（End-to-End Test）：應該測試什麼？
+
+建議測試比例及理由。`,
+                            description: '基礎測試金字塔規劃'
+                        },
+                        advanced: {
+                            template: `你是測試架構師。請為「{feature}」設計符合測試金字塔的自動化策略。
+
+🔺 測試金字塔原則
+「底層多、上層少：單元測試要多，E2E 測試要精。」
+
+📊 各層級分析
+
+【底層：單元測試 Unit Test】(70%)
+測試範圍：
+- 單一函式/方法
+- 純粹的業務邏輯
+- 工具類別
+
+特點：快、穩、便宜
+問題：能測什麼？舉例說明
+
+【中層：整合測試 Integration Test】(20%)
+測試範圍：
+- API 端點
+- 資料庫操作
+- 服務間呼叫
+
+特點：驗證元件互動
+問題：應該 Mock 什麼？什麼不該 Mock？
+
+【頂層：E2E 測試】(10%)
+測試範圍：
+- 關鍵使用者旅程
+- Happy Path
+- 付款/登入等核心流程
+
+特點：最接近真實、但最慢最貴
+問題：只測什麼？
+
+🛠️ 技術建議
+
+請輸出：
+1. 測試金字塔分配圖（各層測試數量估計）
+2. 各層級的測試案例清單
+3. 自動化工具建議
+4. CI/CD 整合建議`,
+                            locked: true,
+                            description: '完整測試金字塔策略'
+                        }
+                    },
+                    {
+                        id: 'k6-performance',
+                        name: 'K6 效能測試',
+                        chapter: 23,
+                        chapterTitle: '老闆舉行咖啡買一送一活動，老闆開心，員工苦臉',
+                        keywords: ['K6', '效能測試', '壓力測試'],
+                        basic: {
+                            template: `請幫我生成一個 K6 效能測試腳本，測試目標如下：
+
+【API 端點】{feature}
+
+需求：
+1. 模擬 100 個虛擬使用者（VUs）
+2. 持續執行 2 分鐘
+3. 設定 Ramp-up 階段
+4. 設定回應時間門檻（p95 < 500ms）
+5. 設定錯誤率門檻（< 1%）
+
+請提供完整可執行的 K6 腳本，並加上中文註解。`,
+                            description: '基礎 K6 效能測試腳本'
+                        },
+                        advanced: {
+                            template: `你是效能測試專家。請為「{feature}」設計完整的效能測試方案。
+
+☕ 咖啡店的效能測試
+「老闆舉辦買一送一，結果隊伍排到街角。這就是尖峰測試（Spike Testing）—系統能不能撐住突如其來的流量？」
+
+📊 效能測試三大指標
+
+1. 回應時間（Response Time）
+   - 客人等多久才拿到咖啡？
+
+2. 吞吐量（Throughput）
+   - 一小時能做多少杯咖啡？
+
+3. 錯誤率（Error Rate）
+   - 100 杯有幾杯做錯？
+
+🎯 測試情境設計
+
+【情境一：負載測試 Load Testing】
+模擬日常尖峰，持續穩定的壓力
+
+【情境二：壓力測試 Stress Testing】
+模擬買一送一，超過系統負荷
+
+【情境三：尖峰測試 Spike Testing】
+模擬遊覽車到站，瞬間湧入大量使用者
+
+【情境四：耐久測試 Endurance Testing】
+模擬 24 小時不打烊
+
+請輸出：
+1. 完整 K6 腳本（TypeScript）
+   - 包含 stages 配置
+   - 包含 thresholds 設定
+   - 包含 check 驗證
+2. 測試執行指令
+3. 結果分析指南
+4. Grafana 儀表板建議`,
+                            locked: true,
+                            description: '企業級 K6 效能測試方案'
+                        }
+                    },
+                    {
+                        id: 'bdd',
+                        name: 'BDD 行為驅動開發',
+                        chapter: 22,
+                        chapterTitle: '工程師能不能講人話，用 BDD 與團隊溝通',
+                        keywords: ['BDD', 'Gherkin', 'Given When Then'],
+                        basic: {
+                            template: `請使用 BDD（Gherkin 語法）為以下功能撰寫測試規格：
+
+【功能描述】{feature}
+
+請使用 Given-When-Then 格式：
+- Given（前置條件）
+- When（執行動作）
+- Then（預期結果）
+
+輸出：Feature 檔案內容`,
+                            description: '基礎 BDD 測試規格'
+                        },
+                        advanced: {
+                            template: `你是 BDD 專家。請為「{feature}」建立完整的行為驅動測試規格。
+
+💬 讓工程師講人話
+「PM 說要測『使用者登入』，開發說測『authentication API』，測試說測『login flow』—三個人講同一件事，卻用三種語言。BDD 就是讓大家講同一種話。」
+
+📝 Gherkin 語法結構
+
+Feature: 功能名稱
+  作為一個 [角色]
+  我想要 [目標]
+  以便於 [價值]
+
+  Background:
+    Given 共同的前置條件
+
+  Scenario: 場景名稱
+    Given 前置條件
+    And 額外條件
+    When 執行動作
+    Then 預期結果
+    And 額外驗證
+
+  Scenario Outline: 資料驅動場景
+    Given <前置條件>
+    When 使用者輸入 <帳號> 和 <密碼>
+    Then 應該看到 <結果>
+
+    Examples:
+      | 帳號 | 密碼 | 結果 |
+      | valid | valid | 成功 |
+      | invalid | valid | 失敗 |
+
+🎯 撰寫原則
+1. 使用業務語言，不用技術術語
+2. 每個 Scenario 只測一件事
+3. 避免 UI 細節（不要寫「點擊按鈕」）
+4. 使用 Scenario Outline 處理多組資料
+
+請輸出：
+1. 完整 Feature 檔案
+2. 至少 5 個 Scenario
+3. 至少 1 個 Scenario Outline
+4. Step Definition 虛擬碼建議`,
+                            locked: true,
+                            description: '完整 BDD 測試規格設計'
+                        }
+                    },
+                    {
+                        id: 'pom',
+                        name: 'Page Object Model',
+                        chapter: 20,
+                        chapterTitle: '自動化測試的神奇收納術─POM',
+                        keywords: ['POM', 'Page Object', 'Playwright'],
+                        basic: {
+                            template: `請使用「Page Object Model」為以下頁面設計自動化測試架構：
+
+【頁面描述】{feature}
+
+請建立：
+1. Page Object 類別結構
+2. 頁面元素定位
+3. 頁面操作方法
+4. 測試案例範例
+
+使用 Playwright + TypeScript。`,
+                            description: '基礎 POM 設計'
+                        },
+                        advanced: {
+                            template: `你是 E2E 測試架構師。請為「{feature}」設計可擴展的 Page Object Model 架構。
+
+🧹 阿嬤的收納術
+「衣服要分類收：上衣放上衣櫃、褲子放褲子櫃。自動化測試也一樣：元素定位放一個地方、操作邏輯放一個地方，才不會亂成一團。」
+
+📁 專案結構設計
+
+tests/
+├── pages/
+│   ├── BasePage.ts       # 基礎頁面類別
+│   ├── LoginPage.ts      # 登入頁面
+│   └── DashboardPage.ts  # 儀表板頁面
+├── components/
+│   ├── Header.ts         # 共用元件
+│   └── Modal.ts
+├── fixtures/
+│   └── testData.ts       # 測試資料
+└── specs/
+    └── login.spec.ts     # 測試檔案
+
+🏗️ Page Object 設計原則
+
+1. 封裝元素定位
+   - 使用 data-testid
+   - 避免使用 XPath
+
+2. 封裝頁面操作
+   - 方法命名要有意義
+   - 回傳 this 或下一個 Page Object
+
+3. 不在 Page Object 中做斷言
+   - 斷言放在測試檔案中
+
+4. 處理等待與同步
+   - 使用 Playwright 的自動等待
+   - 必要時使用 waitFor
+
+請輸出：
+1. 完整的 Page Object 類別（TypeScript）
+2. 測試範例（使用該 Page Object）
+3. fixtures 設計建議
+4. CI/CD 整合配置`,
+                            locked: true,
+                            description: '完整 POM 架構設計'
+                        }
+                    }
+                ]
+            }
+        ]
+    };
+
+    // Unlock password
+    const UNLOCK_PASSWORD = '2563';
+
+    // State
+    let state = {
+        selectedCategory: null,
+        selectedScenario: null,
+        userInput: '',
+        generatedPrompt: '',
+        isAdvanced: false,
+        isUnlocked: false,
+        passwordInput: '',
+        showPasswordModal: false,
+        copySuccess: false,
+        showWelcome: true
+    };
+
+    // Render function
+    function render() {
+        const app = document.getElementById('app');
+        
+        if (state.showWelcome) {
+            app.innerHTML = renderWelcome();
+        } else {
+            app.innerHTML = renderMain();
+        }
+        
+        attachEventListeners();
+    }
+
+    function renderWelcome() {
+        return `
+        <div class="min-h-screen flex items-center justify-center p-4">
+            <div class="bg-white rounded-3xl shadow-2xl max-w-lg w-full p-8 text-center relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-orange-400 via-red-400 to-pink-400"></div>
+                <div class="absolute -top-10 -right-10 w-32 h-32 bg-orange-100 rounded-full opacity-50"></div>
+                <div class="absolute -bottom-10 -left-10 w-40 h-40 bg-yellow-100 rounded-full opacity-50"></div>
+                
+                <div class="relative z-10">
+                    <div class="text-8xl mb-4">👵</div>
+                    <h1 class="text-3xl font-bold text-gray-800 mb-2">測試阿嬤的 AI 咒語錦囊</h1>
+                    <p class="text-lg text-orange-600 font-medium mb-4">The QA Grandma's Prompt Library</p>
+                    <p class="text-sm text-gray-500 mb-6">搭配《我阿嬤都比你會測試》使用</p>
+                    
+                    <div class="bg-amber-50 rounded-2xl p-6 mb-6 text-left">
+                        <p class="text-gray-700 leading-relaxed">
+                            「孫仔啊，問 AI 不是隨便問就好，要用<span class="text-orange-600 font-bold">阿嬤調教過的咒語</span>，效率才會提升 10 倍啦！」
+                        </p>
+                    </div>
+
+                    <div class="space-y-3 text-left text-sm text-gray-600 mb-6">
+                        <div class="flex items-start gap-2">
+                            <span class="text-green-500">✓</span>
+                            <span>25 個章節對應的測試方法 Prompt</span>
+                        </div>
+                        <div class="flex items-start gap-2">
+                            <span class="text-green-500">✓</span>
+                            <span>基礎版免費使用，進階版需輸入密碼</span>
+                        </div>
+                        <div class="flex items-start gap-2">
+                            <span class="text-green-500">✓</span>
+                            <span>一鍵複製，直接貼到 ChatGPT/Claude</span>
+                        </div>
+                        <div class="flex items-start gap-2">
+                            <span class="text-orange-500">🔐</span>
+                            <span>進階咒語通關密碼：書號後四碼</span>
+                        </div>
+                    </div>
+
+                    <button id="startBtn" class="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold py-4 px-8 rounded-xl hover:from-orange-600 hover:to-red-600 transition-all transform hover:scale-105 shadow-lg">
+                        開始使用阿嬤的咒語 ✨
+                    </button>
+                </div>
+            </div>
+        </div>`;
+    }
+
+    function renderMain() {
+        return `
+        <!-- Header -->
+        <header class="bg-white shadow-sm border-b-4 border-orange-400">
+            <div class="max-w-6xl mx-auto px-4 py-4">
+                <div class="flex items-center justify-between flex-wrap gap-2">
+                    <div class="flex items-center gap-3">
+                        <span class="text-4xl">👵</span>
+                        <div>
+                            <h1 class="text-xl font-bold text-gray-800">測試阿嬤的 AI 咒語錦囊</h1>
+                            <p class="text-xs text-gray-500">《我阿嬤都比你會測試》配套工具</p>
+                        </div>
+                    </div>
+                    ${state.isUnlocked ? `
+                    <div class="flex items-center gap-2 bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm">
+                        <span>🔓</span>
+                        <span>進階功能已解鎖</span>
+                    </div>` : ''}
+                </div>
+            </div>
+        </header>
+
+        <main class="max-w-6xl mx-auto px-4 py-6">
+            ${renderCategories()}
+            ${state.selectedCategory ? renderScenarios() : ''}
+            ${state.selectedScenario ? renderPromptGenerator() : ''}
+            ${state.generatedPrompt ? renderGeneratedPrompt() : ''}
+        </main>
+
+        ${state.showPasswordModal ? renderPasswordModal() : ''}
+
+        <!-- Footer -->
+        <footer class="bg-white border-t mt-12 py-6">
+            <div class="max-w-6xl mx-auto px-4 text-center text-gray-600 text-sm">
+                <p class="mb-2">「別再亂問 AI 了！用阿嬤調教過的咒語，效率提升 10 倍。」</p>
+                <p class="text-xs text-gray-400">📚 《我阿嬤都比你會測試：從生活智慧建立測試思維，到自動化與 AI 的完整進化》</p>
+            </div>
+        </footer>`;
+    }
+
+    function renderCategories() {
+        return `
+        <section class="mb-6">
+            <h2 class="text-lg font-bold text-gray-700 mb-3 flex items-center gap-2">
+                <span>📚</span> 選擇章節分類
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                ${promptDatabase.categories.map(cat => `
+                <button class="category-btn p-4 rounded-xl border-2 transition-all text-left ${
+                    state.selectedCategory?.id === cat.id
+                        ? 'border-orange-500 bg-orange-50 shadow-md'
+                        : 'border-gray-200 bg-white hover:border-orange-300 hover:shadow'
+                }" data-id="${cat.id}">
+                    <div class="flex items-center gap-3">
+                        <div class="text-3xl">${cat.icon}</div>
+                        <div>
+                            <div class="font-bold text-gray-800">${cat.name}</div>
+                            <div class="text-xs text-gray-500">${cat.scenarios.length} 個測試方法</div>
+                        </div>
+                    </div>
+                </button>`).join('')}
+            </div>
+        </section>`;
+    }
+
+    function renderScenarios() {
+        return `
+        <section class="mb-6">
+            <h2 class="text-lg font-bold text-gray-700 mb-3 flex items-center gap-2">
+                <span>🎯</span> 選擇測試方法
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                ${state.selectedCategory.scenarios.map(scenario => `
+                <button class="scenario-btn p-4 rounded-xl border-2 text-left transition-all ${
+                    state.selectedScenario?.id === scenario.id
+                        ? 'border-orange-500 bg-orange-50 shadow-md'
+                        : 'border-gray-200 bg-white hover:border-orange-300 hover:shadow'
+                }" data-id="${scenario.id}">
+                    <div class="font-medium text-gray-800 mb-1">${scenario.name}</div>
+                    <div class="text-xs text-orange-600 mb-2">📖 第 ${scenario.chapter} 章</div>
+                    <div class="text-xs text-gray-500 line-clamp-2 mb-2">${scenario.chapterTitle}</div>
+                    <div class="flex flex-wrap gap-1">
+                        ${scenario.keywords.slice(0, 3).map(kw => `
+                        <span class="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">${kw}</span>`).join('')}
+                    </div>
+                </button>`).join('')}
+            </div>
+        </section>`;
+    }
+
+    function renderPromptGenerator() {
+        const scenario = state.selectedScenario;
+        return `
+        <section class="bg-white rounded-2xl shadow-lg p-6 mb-6">
+            <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+                <div>
+                    <h2 class="text-lg font-bold text-gray-700 flex items-center gap-2">
+                        <span>✨</span> ${scenario.name}
+                    </h2>
+                    <p class="text-sm text-gray-500 mt-1">📖 第 ${scenario.chapter} 章：${scenario.chapterTitle}</p>
+                </div>
+                
+                <div class="flex items-center gap-2">
+                    <span class="text-sm text-gray-600">基礎</span>
+                    <button id="toggleAdvanced" class="relative w-14 h-7 rounded-full transition-colors ${
+                        state.isAdvanced ? 'bg-orange-500' : 'bg-gray-300'
+                    }">
+                        <div class="absolute top-1 w-5 h-5 bg-white rounded-full shadow transition-transform ${
+                            state.isAdvanced ? 'translate-x-8' : 'translate-x-1'
+                        }">
+                            ${!state.isUnlocked && !state.isAdvanced ? '<span class="absolute inset-0 flex items-center justify-center text-xs">🔒</span>' : ''}
+                        </div>
+                    </button>
+                    <span class="text-sm text-gray-600">進階 ${!state.isUnlocked ? '🔐' : ''}</span>
+                </div>
+            </div>
+
+            <div class="mb-4 p-3 rounded-lg text-sm ${state.isAdvanced ? 'bg-purple-50 text-purple-700' : 'bg-blue-50 text-blue-700'}">
+                ${state.isAdvanced 
+                    ? `<strong>🚀 進階模式：</strong>${scenario.advanced.description}`
+                    : `<strong>📝 基礎模式：</strong>${scenario.basic.description}`
+                }
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    輸入你的測試目標（例如：會員登入功能、購物車結帳、API /orders）
+                </label>
+                <textarea id="userInput" placeholder="請描述你要測試的功能或系統..." 
+                    class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-orange-400 focus:outline-none transition-colors resize-none" rows="3">${state.userInput}</textarea>
+            </div>
+
+            <button id="generateBtn" class="w-full py-3 rounded-xl font-bold text-white transition-all ${
+                state.userInput.trim()
+                    ? 'bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 shadow-md hover:shadow-lg'
+                    : 'bg-gray-300 cursor-not-allowed'
+            }" ${!state.userInput.trim() ? 'disabled' : ''}>
+                🔮 阿嬤施法！生成咒語
+            </button>
+        </section>`;
+    }
+
+    function renderGeneratedPrompt() {
+        return `
+        <section class="bg-white rounded-2xl shadow-lg p-6">
+            <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+                <h2 class="text-lg font-bold text-gray-700 flex items-center gap-2">
+                    <span>📜</span> 你的專屬咒語
+                </h2>
+                <button id="copyBtn" class="flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${
+                    state.copySuccess
+                        ? 'bg-green-500 text-white'
+                        : 'bg-orange-100 text-orange-700 hover:bg-orange-200'
+                }">
+                    ${state.copySuccess ? '✅ 已複製！' : '📋 一鍵複製'}
+                </button>
+            </div>
+
+            <div class="bg-gray-900 rounded-xl p-4 overflow-auto max-h-96">
+                <pre class="text-gray-100 text-sm whitespace-pre-wrap font-mono leading-relaxed">${escapeHtml(state.generatedPrompt)}</pre>
+            </div>
+
+            <div class="mt-4 p-4 bg-amber-50 rounded-xl">
+                <p class="text-sm text-amber-800">
+                    <strong>👵 阿嬤叮嚀：</strong>複製上面的咒語，貼到 ChatGPT 或 Claude 就可以用囉！
+                    想要更深入了解「${state.selectedScenario.name}」，請翻到本書<strong>第 ${state.selectedScenario.chapter} 章</strong>：
+                    <span class="text-orange-700">「${state.selectedScenario.chapterTitle}」</span>
+                </p>
+            </div>
+        </section>`;
+    }
+
+    function renderPasswordModal() {
+        return `
+        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+                <div class="text-center mb-6">
+                    <div class="text-6xl mb-4">🔐</div>
+                    <h3 class="text-xl font-bold text-gray-800">解鎖進階咒語</h3>
+                    <p class="text-gray-600 mt-2">請輸入《我阿嬤都比你會測試》的通關密碼</p>
+                    <p class="text-sm text-orange-600 mt-1">提示：書號後四碼（MP22563 → 2563）</p>
+                </div>
+
+                <input type="password" id="passwordInput" placeholder="請輸入通關密碼" maxlength="4"
+                    class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-orange-400 focus:outline-none mb-4 text-center text-2xl tracking-widest"
+                    value="${state.passwordInput}">
+
+                <div class="flex gap-3">
+                    <button id="cancelPasswordBtn" class="flex-1 py-3 rounded-xl border-2 border-gray-200 text-gray-600 font-medium hover:bg-gray-50">取消</button>
+                    <button id="submitPasswordBtn" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold hover:from-orange-600 hover:to-red-600">解鎖</button>
+                </div>
+
+                <p class="text-center text-sm text-gray-500 mt-4">
+                    還沒有書？<a href="#" class="text-orange-600 hover:underline ml-1">點此購買 →</a>
+                </p>
+            </div>
+        </div>`;
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function attachEventListeners() {
+        // Start button
+        const startBtn = document.getElementById('startBtn');
+        if (startBtn) {
+            startBtn.addEventListener('click', () => {
+                state.showWelcome = false;
+                render();
+            });
+        }
+
+        // Category buttons
+        document.querySelectorAll('.category-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const catId = btn.dataset.id;
+                state.selectedCategory = promptDatabase.categories.find(c => c.id === catId);
+                state.selectedScenario = null;
+                state.generatedPrompt = '';
+                state.userInput = '';
+                render();
+            });
+        });
+
+        // Scenario buttons
+        document.querySelectorAll('.scenario-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const scenarioId = btn.dataset.id;
+                state.selectedScenario = state.selectedCategory.scenarios.find(s => s.id === scenarioId);
+                state.generatedPrompt = '';
+                state.userInput = '';
+                state.isAdvanced = false;
+                render();
+            });
+        });
+
+        // User input
+        const userInput = document.getElementById('userInput');
+        if (userInput) {
+            userInput.addEventListener('input', (e) => {
+                state.userInput = e.target.value;
+                render();
+            });
+        }
+
+        // Toggle advanced
+        const toggleAdvanced = document.getElementById('toggleAdvanced');
+        if (toggleAdvanced) {
+            toggleAdvanced.addEventListener('click', () => {
+                if (!state.isUnlocked && !state.isAdvanced) {
+                    state.showPasswordModal = true;
+                } else {
+                    state.isAdvanced = !state.isAdvanced;
+                    state.generatedPrompt = '';
+                }
+                render();
+            });
+        }
+
+        // Generate button
+        const generateBtn = document.getElementById('generateBtn');
+        if (generateBtn) {
+            generateBtn.addEventListener('click', () => {
+                if (!state.selectedScenario || !state.userInput.trim()) return;
+                const promptData = state.isAdvanced ? state.selectedScenario.advanced : state.selectedScenario.basic;
+                state.generatedPrompt = promptData.template.replace(/{feature}/g, state.userInput.trim());
+                render();
+            });
+        }
+
+        // Copy button
+        const copyBtn = document.getElementById('copyBtn');
+        if (copyBtn) {
+            copyBtn.addEventListener('click', async () => {
+                try {
+                    await navigator.clipboard.writeText(state.generatedPrompt);
+                    state.copySuccess = true;
+                    render();
+                    setTimeout(() => {
+                        state.copySuccess = false;
+                        render();
+                    }, 2000);
+                } catch (err) {
+                    const textArea = document.createElement('textarea');
+                    textArea.value = state.generatedPrompt;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    state.copySuccess = true;
+                    render();
+                    setTimeout(() => {
+                        state.copySuccess = false;
+                        render();
+                    }, 2000);
+                }
+            });
+        }
+
+        // Password modal
+        const passwordInput = document.getElementById('passwordInput');
+        if (passwordInput) {
+            passwordInput.addEventListener('input', (e) => {
+                state.passwordInput = e.target.value;
+            });
+            passwordInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') submitPassword();
+            });
+        }
+
+        const cancelPasswordBtn = document.getElementById('cancelPasswordBtn');
+        if (cancelPasswordBtn) {
+            cancelPasswordBtn.addEventListener('click', () => {
+                state.showPasswordModal = false;
+                state.passwordInput = '';
+                render();
+            });
+        }
+
+        const submitPasswordBtn = document.getElementById('submitPasswordBtn');
+        if (submitPasswordBtn) {
+            submitPasswordBtn.addEventListener('click', submitPassword);
+        }
+    }
+
+    function submitPassword() {
+        if (state.passwordInput === UNLOCK_PASSWORD) {
+            state.isUnlocked = true;
+            state.showPasswordModal = false;
+            state.isAdvanced = true;
+            state.passwordInput = '';
+            render();
+        } else {
+            alert('密碼錯誤！請確認書中的通關密碼（書號後四碼）');
+        }
+    }
+
+    // Initial render
+    render();
+    </script>
+</body>
+</html>
